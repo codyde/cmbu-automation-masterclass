@@ -1,0 +1,264 @@
+---
+project: Lab
+kind: PIPELINE
+name: Kubernetes via Wardroom
+enabled: true
+description: Leverages Cloud Assembly, Ansible, and Heptio Wardroom to deploy a multi-master multi-worker
+  cluster on vSphere
+concurrency: 10
+input:
+  lbname: ''
+_inputMeta:
+  lbname:
+    mandatory: true
+    description: ''
+ciWorkspace:
+  endpoint: Photon-Docker
+  image: harbor.humblelab.com/library/hlbuilder:latest
+  registry: ''
+  path: ''
+  cache:
+  - ''
+stageOrder:
+- Prepare Systems
+- Execute Wardroom Playbook
+- Restore Variables
+stages:
+  Prepare Systems:
+    taskOrder:
+    - Deploy Infrastructure
+    - Set K8s LB Config,Set DNS - NGINX
+    - Refresh Master DNS
+    tasks:
+      Set K8s LB Config:
+        type: SSH
+        endpoints:
+          agent: Agent
+        input:
+          privatekey: ''
+          password: ${var.ansiblepass}
+          workingDirectory: ''
+          environmentVariables: {
+            LBNAME: '${input.lbname}',
+            NGINXIP: '${Prepare Systems.Deploy Infrastructure.output.deploymentDetails.resources.nginx.address}'
+          }
+          host: ${var.ansiblehost}
+          arguments: [
+            ]
+          passphrase: ''
+          script: |-
+            sed -i "s/replaceme_ip/$NGINXIP/" /root/playbooks/wardroom_vars.yml
+            sed -i "s/replaceme_hostname/$LBNAME/" /root/playbooks/wardroom_vars.yml
+          username: root
+      Set DNS - NGINX:
+        type: SSH
+        endpoints:
+          agent: Agent
+        input:
+          privatekey: ''
+          password: ${var.ansiblepass}
+          workingDirectory: ''
+          environmentVariables: {
+            IBHOST: 192.168.1.5,
+            LBNAME: '${input.lbname}',
+            NGINXIP: '${Prepare Systems.Deploy Infrastructure.output.deploymentDetails.resources.nginx.address}'
+          }
+          host: ${var.ansiblehost}
+          arguments: [
+            ]
+          passphrase: ''
+          script: |-
+            curl -k1 -u ${var.ibuser}:${var.ibpass} -H "Content-Type: application/json" \
+            -X POST https://$IBHOST/wapi/v2.5/record:host -d \
+            '{"ipv4addrs":[{"ipv4addr":"'"$NGINXIP"'"}],"name":"'"$LBNAME"'"}'
+          username: root
+      Refresh Master DNS:
+        type: SSH
+        endpoints:
+          agent: Agent
+        input:
+          privatekey: ''
+          password: ${var.ansiblepass}
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: ${var.ansiblehost}
+          arguments: [
+            ]
+          passphrase: ''
+          script: ansible-playbook /root/playbooks/refresh-dns.yml --inventory /etc/ansible/hosts --limit
+            masters
+          username: root
+      Deploy Infrastructure:
+        type: Blueprint
+        input:
+          blueprint: Essential PKS Kubernetes Cluster
+          filepath: ''
+          action: CreateDeployment
+          deploymentName: Essential PKS - ${input.lbname}
+          version: '13'
+          parameters: {
+            }
+  Execute Wardroom Playbook:
+    taskOrder:
+    - Wardroom Playbook
+    - Test Nodes
+    tasks:
+      Wardroom Playbook:
+        type: SSH
+        endpoints:
+          agent: Agent
+        input:
+          privatekey: ''
+          password: ${var.ansiblepass}
+          workingDirectory: /root/playbooks/
+          environmentVariables: {
+            }
+          host: ${var.ansiblehost}
+          arguments: [
+            ]
+          passphrase: ''
+          script: ansible-playbook /root/playbooks/wardroom/swizzle/install.yml --inventory /etc/ansible/hosts
+            --extra-vars @wardroom_vars.yml
+          username: root
+      Test Nodes:
+        type: SSH
+        ignoreFailure: true
+        endpoints:
+          agent: Agent
+        input:
+          privatekey: ''
+          password: ${var.sshpass}
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: ${Prepare Systems.Deploy Infrastructure.output.deploymentDetails.resources.pmaster.address}
+          arguments: [
+            ]
+          passphrase: ''
+          script: |-
+            kubectl cluster-info
+            kubectl get nodes
+          username: root
+  Restore Variables:
+    taskOrder:
+    - Restore Vars
+    tasks:
+      Restore Vars:
+        type: SSH
+        ignoreFailure: true
+        endpoints:
+          agent: Agent
+        input:
+          privatekey: ''
+          password: ${var.ansiblepass}
+          workingDirectory: /root/playbooks/
+          environmentVariables: {
+            LBNAME: '${input.lbname}',
+            NGINXIP: '${Prepare Systems.Deploy Infrastructure.output.deploymentDetails.resources.nginx.address}'
+          }
+          host: ${var.ansiblehost}
+          arguments: [
+            ]
+          passphrase: ''
+          script: |-
+            sed -i "s/$NGINXIP/replaceme_ip/" /root/playbooks/wardroom_vars.yml
+            sed -i "s/$LBNAME/replaceme_hostname/" /root/playbooks/wardroom_vars.yml
+          username: root
+notifications:
+  webhook:
+  - action: post
+    headers:
+      content-type: application/json
+    stage: Prepare Systems
+    event: SUCCESS
+    payload: |-
+      {
+          "text":"The Infrastructure for your K8s deployment ( *${Prepare Systems.Deploy Infrastructure.output.deploymentName}* ) has completed, and the staging playbooks have been ran. Moving on..."
+      }
+    task: Deploy Infrastructure
+    agent: d4d2b481-aaae-443a-9a31-e95ff706e52f
+    url: https://hooks.slack.com/services/T024JFTN4/BL2GU4RJP/<slackwebhook>
+  - action: post
+    headers:
+      content-type: application/json
+    stage: Prepare Systems
+    event: SUCCESS
+    payload: |-
+      {
+          "text":"The template variables have been updated for NGINX"
+      }
+    task: Set K8s LB Config
+    agent: d4d2b481-aaae-443a-9a31-e95ff706e52f
+    url: https://hooks.slack.com/services/T024JFTN4/BL2GU4RJP/<slackwebhook>
+  - action: post
+    headers:
+      content-type: application/json
+    stage: Prepare Systems
+    event: SUCCESS
+    payload: |-
+      {
+          "text":"We have added an Infoblox record for this cluster successfully"
+      }
+    task: Set DNS - NGINX
+    agent: d4d2b481-aaae-443a-9a31-e95ff706e52f
+    url: https://hooks.slack.com/services/T024JFTN4/BL2GU4RJP/<slackwebhook>
+  - action: post
+    headers:
+      content-type: application/json
+    stage: Prepare Systems
+    event: SUCCESS
+    payload: |-
+      {
+          "text":"We have refreshed the DNS across all masters...\n Moving on to execution of the Wardroom (https://github.com/heptiolabs/wardroom) playbooks in Ansible"
+      }
+    task: Refresh Master DNS
+    agent: d4d2b481-aaae-443a-9a31-e95ff706e52f
+    url: https://hooks.slack.com/services/T024JFTN4/BL2GU4RJP/<slackwebhook>
+  - action: post
+    headers:
+      content-type: application/json
+    stage: Execute Wardroom Playbook
+    event: SUCCESS
+    payload: |-
+      {
+          "text":"Wardroom playbooks have completed succesfully. \n Moving on to testing the cluster..."
+      }
+    task: Wardroom Playbook
+    agent: d4d2b481-aaae-443a-9a31-e95ff706e52f
+    url: https://hooks.slack.com/services/T024JFTN4/BL2GU4RJP/<slackwebhook>
+  - action: post
+    headers:
+      content-type: application/json
+    stage: Execute Wardroom Playbook
+    event: SUCCESS
+    payload: |-
+      {
+          "text":"*Successfully validated the cluster availability!*"
+      }
+    task: Test Nodes
+    agent: d4d2b481-aaae-443a-9a31-e95ff706e52f
+    url: https://hooks.slack.com/services/T024JFTN4/BL2GU4RJP/<slackwebhook>
+  - action: post
+    headers:
+      content-type: application/json
+    stage: Restore Variables
+    event: SUCCESS
+    payload: |-
+      {
+          "text":"Variables have been restored to the wardroom_vars.yml file!"
+      }
+    task: Restore Vars
+    agent: d4d2b481-aaae-443a-9a31-e95ff706e52f
+    url: https://hooks.slack.com/services/T024JFTN4/BL2GU4RJP/<slackwebhook>
+  - action: post
+    headers:
+      content-type: application/json
+    stage: Restore Variables
+    event: SUCCESS
+    payload: |-
+      {
+          "text":"*Your cluster has been completed! Connect to a master and retrieve your kubeconfig file."
+      }
+    agent: d4d2b481-aaae-443a-9a31-e95ff706e52f
+    url: https://hooks.slack.com/services/T024JFTN4/BL2GU4RJP/<slackwebhook>

@@ -1,0 +1,71 @@
+---
+project: Lab
+kind: PIPELINE
+name: vSphere Template Builder
+enabled: true
+description: 'Leverages Cloud Assembly and HashiCorp Packer to build a new vSphere Template '
+concurrency: 10
+ciWorkspace:
+  endpoint: ''
+  image: ''
+  registry: ''
+  path: ''
+  cache:
+  - ''
+stageOrder:
+- Build
+- Clean
+stages:
+  Build:
+    taskOrder:
+    - Build Deployment
+    tasks:
+      Build Deployment:
+        type: Blueprint
+        input:
+          blueprint: vSphere Template Builder
+          filepath: ''
+          action: CreateDeployment
+          deploymentName: Ubuntu 18 - Packer Automated Build
+          version: '3'
+          parameters: {
+            host: hlcoresx01.humblelab.com,
+            folder: _Templates,
+            cluster: Management,
+            network: VM Network,
+            password: VMware123!,
+            username: administrator@vsphere.local,
+            datastore: hl-core-ds01,
+            ssh_password: VMware123!,
+            ssh_username: hladmin,
+            vcenter_server: hlcorevc01.humblelab.com
+          }
+  Clean:
+    taskOrder:
+    - Delete Builder
+    tasks:
+      Delete Builder:
+        type: Blueprint
+        input:
+          _deploymentFlag: false
+          action: DeleteDeployment
+          deploymentName: ${Build.Build Deployment.output.deploymentName}
+notifications:
+  email:
+  - stage: Build
+    subject: Ubuntu 18 Build Completed
+    task: Build Deployment
+    endpoint: Codestream-Default-Email
+    body: We have completed the build with the following deployment name in Cloud Assembly - ${Build.Build
+      Deployment.output.deploymentName}
+    event: SUCCESS
+    to:
+    - cdearkland@vmware.com
+  - stage: Clean
+    subject: Builder Removed
+    task: Delete Builder
+    endpoint: Codestream-Default-Email
+    body: ''
+    event: SUCCESS
+    to:
+    - cdearkland@vmware.com
