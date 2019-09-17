@@ -1,0 +1,15 @@
+---
+exportVersion: "1"
+exportId: "8a769fbc656a8bfb01656e048dfe0002"
+name: "Announce a Build with Slack"
+runtime: "python"
+entrypoint: "handler"
+description: "Slack Notification"
+inputs:
+  target: "World"
+timeoutSeconds: 180
+dependencies: "requests"
+actionType: "SCRIPT"
+actionTemplateName: "Custom script"
+actionTemplateNamespace: "com.vmware.automation.abx"
+memoryInMB: 150

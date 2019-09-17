@@ -1,0 +1,87 @@
+- name: Deploy Worker Nodes
+  hosts: all
+  connection: ssh
+  gather_facts: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+    - name: "Disabling Swap"
+      command: swapoff -a
+
+    - name: "Adding Docker Key"
+      apt_key:
+        url: "https://download.docker.com/linux/ubuntu/gpg"
+        state: present
+
+    - name: "Adding Kubernetes Key"
+      apt_key:
+        url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+        state: present
+
+    - name: "Add Docker Repository"
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+        state: present
+
+    - name: "Add Kubernetes Repository"
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+
+    - name: "Update APT Packages"
+      apt:
+        upgrade: yes
+        update_cache: yes
+
+    - name: "Stage Docker Folder"
+      file:
+        path: /etc/docker
+        state: directory
+
+    - name: "Import Docker Daemon JSON"
+      copy:
+        src: 'daemon.json'
+        dest: '/etc/docker/daemon.json'
+
+    - name: "Install Docker CE"
+      package: name=docker-ce state=present
+
+    - name: "Enable Systemd Docker Service"
+      command: systemctl enable docker
+
+    - name: "Install transport-https"
+      apt:
+        name: apt-transport-https
+
+    - name: "Installing Kubernetes Packages"
+      apt:
+        name: "{{ items }}"
+      vars:
+        items:
+          - kubelet
+          - kubeadm
+          - kubectl
+          - selinux-utils
+
+    - name: Stage Kubelet File
+      file:
+        path: /etc/default/kubelet
+        state: touch
+
+    - name: "Configure Node IP"
+      lineinfile:
+        path: /etc/default/kubelet
+        line: KUBELET_EXTRA_ARGS=--node-ip={{ ansible_default_ipv4.address }}
+
+    - name: Restart kubelet
+      service:
+        name: kubelet
+        daemon_reload: yes
+        state: restarted
+
+    - name: "Copy Join Command"
+      copy: src=join-command dest=/tmp/join-command.sh mode=0777
+
+    - name: "Join to Cluster"
+      command: sh /tmp/join-command.sh

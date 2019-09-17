@@ -1,0 +1,1584 @@
+{
+	"info": {
+		"_postman_id": "b6af6871-01ea-448f-94c9-3195b609be0b",
+		"name": "vRealize Automation Cloud",
+		"description": "Sample API calls to support Tango Beta lab exercises.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"item": [
+				{
+					"name": "00 - Generic Request",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/provisioning/uerp/resources/endpoints?expand",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"provisioning",
+								"uerp",
+								"resources",
+								"endpoints"
+							],
+							"query": [
+								{
+									"key": "expand",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "01 - Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"tests[\"Response contains auth token\"] = responseBody.has(\"token\");",
+									"postman.clearEnvironmentVariable(\"token\");",
+									"var data = JSON.parse(responseBody);",
+									"tests[\"Auth token is not null\"] = data.token !== \"\";",
+									"postman.setEnvironmentVariable(\"token\", data.token);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"{{username}}\",\n\t\"password\": \"{{password}}\",\n\t\"host\": \"127.0.0.1\",\n\t\"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/login",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/cloud-accounts",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"cloud-accounts"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "First Time Configuration",
+			"item": [
+				{
+					"name": "02 - Get Cloud Accounts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/cloud-accounts",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"cloud-accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "03 - Create Cloud Account (Azure)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cloudAccountType\": \"azure\",\n    \"privateKeyId\": \"<application-ID>\",\n    \"privateKey\": \"<application-secret>\",\n    \"cloudAccountProperties\": {\n        \"userLink\" : \"<subscription-ID>\",\n        \"azureTenantId\" : \"<tenant-ID>\"\n    },\n    \"regionIds\": [\n        \"<region1>\"\n    ],\n    \"createDefaultZones\" : \"true\",\n    \"name\": \"azure\"\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/cloud-accounts",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"cloud-accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "04 - Create Cloud Account (AWS)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cloudAccountType\": \"aws\",\n    \"privateKeyId\": \"<aws-key-ID>\",\n    \"privateKey\": \"<aws-secret-key>\",\n    \"cloudAccountProperties\": {\n        \n    },\n    \"regionIds\": [\n        \"us-east-1\"\n    ],\n    \"createDefaultZones\" : \"true\",\n    \"name\": \"aws-b30\"\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/cloud-accounts",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"cloud-accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "05 - Get Zones",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "991f3a2c-114e-4719-9c36-e8e15527c078",
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"    if (jsonData[i].name.has(\"us-east-1\")) {",
+									"        postman.clearEnvironmentVariable(\"awsZoneLink\");",
+									"        postman.setEnvironmentVariable(\"awsZoneLink\", jsonData[i].id);",
+									"    }",
+									"    if (jsonData[i].name.has(\"eastus\")) {",
+									"        postman.clearEnvironmentVariable(\"azureZoneLink\");",
+									"        postman.setEnvironmentVariable(\"azureZoneLink\", jsonData[i].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/zones",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"zones"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "06 - Create Project with Zones",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\" : \"Rainpole Corp Communications\",\n\t\"description\" : \"API Generated Project\",\n    \"administrators\" : [\n        {\n            \"email\" : \"jschulman@vmware.com\"\n        }\n    ],\n    \"members\" : [\n    \t{\n    \t\t\"email\" : \"nsullivan@vmware.com\"\n    \t}\n    ],\n    \"zoneAssignmentConfigurations\":[\n\t    {\n\t    \t\"zoneId\": \"{{awsZoneLink}}\",\n\t    \t\"priority\": 1\n\t    }, \n\t    {\n\t    \t\"zoneId\": \"{{azureZoneLink}}\",\n\t    \t\"priority\": 2\n\t    }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/projects",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"projects"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "07 - Get Projects",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "cd14fb11-8595-48db-9465-08a51c51455b",
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"    if (jsonData[i].name.has(\"Rainpole\")) {",
+									"        postman.setEnvironmentVariable(\"projectId\", jsonData[i].id);",
+									"        postman.setEnvironmentVariable(\"projectLink\", jsonData[i].selfLink);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/projects",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"projects"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "08 - *In Progress* - Assign Zones to Project Copy",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n  \"zoneAssignmentConfigurations\": \n  [\n  \n    {  \n      \"zoneLink\": \"{{awsZoneLink}}\",\n      \"priority\": 1\n    },\n    {  \n      \"zoneLink\": \"{{azureZoneLink}}\",\n      \"priority\": 2\n    }\n  \n  ]\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/projects/{{projectId}}",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"projects",
+								"{{projectId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "09 - Get Regions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "cdf1b7dc-e508-4cd6-8d8c-8362c7617d01",
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"    if (jsonData[i].externalRegionId.has(\"us-east-1\")) {",
+									"        postman.setEnvironmentVariable(\"awsRegionLink\", jsonData[i].id);",
+									"    }",
+									"    if (jsonData[i].externalRegionId.has(\"eastus\")) {",
+									"        postman.setEnvironmentVariable(\"azureRegionLink\", jsonData[i].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/regions",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"regions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "10 - Get Fabric Flavors",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/fabric-flavors",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"fabric-flavors"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "11 - Create Flavor Mapping (Azure)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f5d21f11-a75d-4b9e-a6ef-d3f15acb3209",
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"    if (jsonData[i].name.has(\"eastus\")) {",
+									"        postman.clearEnvironmentVariable(\"azureZoneLink\");",
+									"        postman.setEnvironmentVariable(\"azureZoneLink\", jsonData[i].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"Azure flavor profile\",\n\t\"description\": \"Test Azure flavor profile created through Tango REST API\",\n\t\"flavorMapping\": {\n\t\t\"small\": {\n\t\t\t\"name\": \"Standard_A0\"\n\t\t},\n\t\t\"medium\": {\n\t\t\t\"name\": \"Standard_A1\"\n\t\t},\n\t\t\"large\": {\n\t\t\t\"name\": \"Standard_A2\"\n\t\t}},\n\t\"regionId\": \"{{azureRegionLink}}\"\n\t}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/flavor-profiles",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"flavor-profiles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "12 - Create Flavor Mapping (AWS)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"AWS flavor profile\",\n\t\"description\": \"Test AWS flavor profile created through Tango REST API\",\n\t\"flavorMapping\": {\n\t\t\"small\": {\n\t\t\t\"name\": \"t2.small\"\n\t\t},\n\t\t\"medium\": {\n\t\t\t\"name\": \"t2.medium\"\n\t\t},\n\t\t\"large\": {\n\t\t\t\"name\": \"t2.large\"\n\t\t}},\n\t\"regionId\": \"{{awsRegionLink}}\"\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/flavor-profiles",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"flavor-profiles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "13 - Get Azure Fabric Images with OData",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f5cc4698-846b-4f12-adeb-299c398fe90e",
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"    if (jsonData[i].externalId.has(\"Canonical:UbuntuServer:16.04-LTS:latest\") && jsonData[i].externalRegionId == \"eastus\") {",
+									"        postman.setEnvironmentVariable(\"azureUbuntuLink\", jsonData[i].selfLink);",
+									"        postman.setEnvironmentVariable(\"azureUbuntuId\"), jsonData[i].id",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/fabric-images?$filter=name eq '*ubuntuserver*latest'",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"fabric-images"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "name eq '*ubuntuserver*latest'"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "13 - Get vSphere Fabric Images with OData",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f5cc4698-846b-4f12-adeb-299c398fe90e",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"console.log(jsonData)",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"    if (jsonData[i].content.name.has(\"template_ubuntu18\")) {",
+									"        console.log(\"here\")",
+									"        postman.setEnvironmentVariable(\"vsphereUbuntuLink\", jsonData[i].selfLink);",
+									"        postman.setEnvironmentVariable(\"vsphereUbuntuId\"), jsonData[i].id",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/fabric-images?$filter=name eq 'template_ubuntu18'",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"fabric-images"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "name eq 'template_ubuntu18'"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "13 - Get vSphere Fabric Images with OData Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f5cc4698-846b-4f12-adeb-299c398fe90e",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"console.log(jsonData)",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"    if (jsonData[i].content.name.has(\"template_ubuntu18\")) {",
+									"        console.log(\"here\")",
+									"        postman.setEnvironmentVariable(\"vsphereUbuntuLink\", jsonData[i].selfLink);",
+									"        postman.setEnvironmentVariable(\"vsphereUbuntuId\"), jsonData[i].id",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/fabric-images?$filter=name eq 'template_ubuntu18'",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"fabric-images"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "name eq 'template_ubuntu18'"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "14 - Get AWS Fabric Images with OData",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "492357d2-6a6a-4ebd-a77f-9bff26f6e3ff",
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"    if (jsonData[i].externalId.has(\"ami-da05a4a0\") && jsonData[i].externalRegionId == \"us-east-1\" ) {",
+									"        postman.setEnvironmentVariable(\"awsUbuntuLink\", jsonData[i].selfLink);",
+									"        postman.setEnvironmentVariable(\"awsUbuntuId\", jsonData[i].id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/fabric-images?$filter=name eq 'ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20171026.1'",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"fabric-images"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "name eq 'ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20171026.1'"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "15 - Create Azure Image Mapping",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n  \"name\" : \"azure-image-profile\",\n  \"description\": \"Image Profile for Microsoft Azure\",\n  \"imageMapping\" : {\n    \"ubuntu\": {\n      \"selfLink\": \"{{azureUbuntuLink}}\",\n      \"id\": \"{{azureUbuntuId}}\"\n    }},\n  \"regionId\": \"{{azureRegionLink}}\"\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/image-profiles",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"image-profiles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "16 - Create AWS Image Mapping",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n  \"name\" : \"aws-image-profile\",\t\n  \"description\": \"Image Profile for AWS Images\"\n  \"imageMapping\" : {\n    \"ubuntu\": {\n      \"selfLink\": \"{{awsUbuntuLink}}\".\n      \"id\": \"{{awsUbuntuId}}\"\n    }\n  },\n  \"regionLink\": \"{{awsRegionLink}}\"\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/image-profiles",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"image-profiles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "17 - Get Azure Networks with OData",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9d8a10e7-f37e-4dab-b5e1-4e6d4bdd487f",
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"    if (jsonData[i].name.has(\"appnet-public-dev\")) {",
+									"        postman.setEnvironmentVariable(\"azureNetworkLink\", jsonData[i].Id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/fabric-networks?$filter=externalRegionId eq 'westus'",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"fabric-networks"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "externalRegionId eq 'westus'"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "18 - Get AWS Networks with OData",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "23f776d2-60fc-4013-a9f5-82c023628038",
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"    if (jsonData[i].name.has(\"appnet-public-dev\")) {",
+									"        postman.setEnvironmentVariable(\"awsNetworkLink\", jsonData[i].selfLink);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/fabric-networks?$filter=externalRegionId eq 'us-east-1'",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"fabric-networks"
+							],
+							"query": [
+								{
+									"key": "$filter",
+									"value": "externalRegionId eq 'us-east-1'"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "19 - Create Azure Network profile",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Azure Network Profile\",\n  \"regionId\": \"{{azureRegionLink}}\",\n  \"fabricNetworkLinks\" : [\n\t\"{{azureNetworkLink}}\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/network-profiles",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"network-profiles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "20 - Create AWS Network profile",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"AWS Network Profile\",\n  \"regionId\": \"{{awsRegionLink}}\",\n  \"fabricNetworkLinks\" : [\n\t\"{{awsNetworkLink}}\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/network-profiles",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"network-profiles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "21 - Get Azure Storage Accounts",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"for ( i=0; i<jsonData.length; i++) {",
+									"        postman.setEnvironmentVariable(\"storageAccountLink\", jsonData[i].selfLink);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/iaas/fabric-storage-accounts",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"fabric-storage-accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "22 - Create Storage Profile (Azure)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"name\": \"Azure Storage Profile\",\r\n\t\"regionId\": \"{{azureRegionLink}}\",\r\n\t\"azureStoragePolicies\": [\r\n\t\t{\r\n\t\t\t\"defaultItem\": true,\r\n\t\t\t\"supportsEncryption\": false,\r\n\t\t\t\"tags\": [\r\n                    {\r\n                        \"key\": \"env\",\r\n                        \"value\": \"test\"\r\n                    },\r\n                    {\r\n                        \"key\": \"tier\",\r\n                        \"value\": \"standard\"\r\n                    }\r\n                ],\r\n\t\t\t\"diskType\": \"Standard_LRS\",\r\n\t\t\t\"osDiskCaching\": \"None\",\r\n\t\t\t\"dataDiskCaching\": \"None\",\r\n\t\t\t\"name\": \"Managed Disk\"\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"defaultItem\": false,\r\n\t\t\t\"supportsEncryption\": true,\r\n\t\t\t\"storageAccountLink\": \"{{storageAccountLink}}\",\r\n\t\t\t\"osDiskCaching\": \"ReadOnly\",\r\n\t\t\t\"dataDiskCaching\": \"ReadWrite\",\r\n\t\t\t\"name\": \"Storage Account\"\r\n\t\t}\r\n\t]\r\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/storage-profiles-azure",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"storage-profiles-azure"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "23 - Create Storage Profile (AWS)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"name\": \"AWS Storage Profile\",\r\n\t\"regionId\": \"{{awsRegionLink}}\",\r\n\t\"awsStoragePolicies\": [\r\n\t\t{\r\n\t\t\t\"defaultItem\": true,\r\n\t\t\t\"deviceType\": \"ebs\",\r\n\t\t\t\"tags\": [\r\n                    {\r\n                        \"key\": \"env\",\r\n                        \"value\": \"test\"\r\n                    },\r\n                    {\r\n                        \"key\": \"tier\",\r\n                        \"value\": \"standard\"\r\n                    }\r\n\t                ],\r\n\t\t\t\"volumeType\": \"gp2\",\r\n\t\t\t\"name\": \"EBS Disk\"\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"defaultItem\": false,\r\n\t\t\t\"deviceType\": \"instance-store\",\r\n\t\t\t\"name\": \"Storage Account\"\r\n\t\t}\r\n\t]\r\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/iaas/storage-profiles-aws",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"iaas",
+								"storage-profiles-aws"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "24 - Create Blueprint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "980fc10d-1e1a-43d2-923b-97600ef62947",
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"postman.setEnvironmentVariable(\"bpNameLink\", jsonData.selfLink);",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Basic Blueprint\",\n  \"displayName\": \"Simple 1 Tier Ubuntu\",\n  \"description\": \"A basic single-VM blueprint\",\n  \"iteration\": \"1\",\n  \"tags\": [\n  \t\n  ],\n  \"content\": \"\nname: CLIBasicUC1\niteration: 1\ndescription: BasicUbuntu\ninputs:\n  count:\n    type: integer\n    minimum: 1\n    default: 1\n    maximum: 2\n    title: Number of Instances\nresources:\n  BasicUbuntu:\n    type: Cloud.Machine\n    properties:\n      name: BasicUbuntu\n      image: ubuntu\n      flavor: small\n      count: '${input.count}'\n\"\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/blueprint/api/blueprints",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"blueprint",
+								"api",
+								"blueprints"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "25 - Get Blueprints",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c75f1ae5-e504-436b-884b-4f5a7e07132f",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/blueprint/api/blueprints",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"blueprint",
+								"api",
+								"blueprints"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "25 - Get Blueprints Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c75f1ae5-e504-436b-884b-4f5a7e07132f",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/blueprint/api/blueprints",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"blueprint",
+								"api",
+								"blueprints"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "26 - Provision Blueprint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "18230738-3f65-4402-adb0-21b29b4840e0",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"deploymentName\": \"Example API Deployment\",\n  \"reason\": \"Create a deployment via API\",\n  \"description\": \"Create a deployment via API\",\n  \"projectLink\": \"{{projectLink}}\",\n  \"plan\": false,\n  \"destroy\": false,\n  \"blueprintId\": \"{{bpNameLink}}\",\n  \"inputs\": {\n    \"count\": \"1\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/blueprint/api/blueprint-requests",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"blueprint",
+								"api",
+								"blueprint-requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "27 - Get CMX Clusters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c75f1ae5-e504-436b-884b-4f5a7e07132f",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/cmx/api/resources/k8s/clusters",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"cmx",
+								"api",
+								"resources",
+								"k8s",
+								"clusters"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "27 - Get CMX Clusters Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c75f1ae5-e504-436b-884b-4f5a7e07132f",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/cmx/api/resources/k8s/clusters",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"cmx",
+								"api",
+								"resources",
+								"k8s",
+								"clusters"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "28 - Get PKS CMX Cluster KubeConfig",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c75f1ae5-e504-436b-884b-4f5a7e07132f",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{url-home}}/cmx/api/resources/k8s/clusters/{{pks-cluster}}/kube-config",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"cmx",
+								"api",
+								"resources",
+								"k8s",
+								"clusters",
+								"{{pks-cluster}}",
+								"kube-config"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CodeStream Get Pipelines",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "18230738-3f65-4402-adb0-21b29b4840e0",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{url-home}}/pipeline/api/pipelines",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"pipeline",
+								"api",
+								"pipelines"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get ABX Actions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "18230738-3f65-4402-adb0-21b29b4840e0",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{url-home}}/pipeline/api/pipelines",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"pipeline",
+								"api",
+								"pipelines"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "29 - CodeStream Create Kubernetes Endpoint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "18230738-3f65-4402-adb0-21b29b4840e0",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\":\"Pks-Cluster-api\",\n\t\"description\":\"\",\n\t\"isRestricted\":\"\",\n\t\"properties\":\n\t\t{\n\t\t\t\"leMansAgent\":\"d4d2b481-aaae-443a-9a31-e95ff706e52f\",\n\t\t\t\"kubernetesURL\":\"https://10.40.14.10:8443\",\n\t\t\t\"authType\":\"token\",\n\t\t\t\"token\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImU0OWJhMDc5LTQ5YzctNDBkOS1iNTgyLTJmYmUzYTI1OTNlYy10b2tlbi1nYmpsaCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJlNDliYTA3OS00OWM3LTQwZDktYjU4Mi0yZmJlM2EyNTkzZWMiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiJkZjQ3YzYyMi03ODcxLTExZTktOWQ0Yy0wMDUwNTZiMjViN2QiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6ZGVmYXVsdDplNDliYTA3OS00OWM3LTQwZDktYjU4Mi0yZmJlM2EyNTkzZWMifQ.i_5d-QNHZvYVdj0_izvpOp43kbScI1zZYgbDnCyViO3o-B0L0nXuxXwAPW-rz-gqyjMeoNd9pYIUcsik4U06DkGM_qDfk9wGmsSYJxLl5sFAv-n6a66O3Hu2hG55wEbqQtfqbC_ZY1i_jhKxr3R0ElRk4gTVPegbqmcy6_J5F6zVYxAJBapqfPh7qEEaAOPhAAnMKxGI12yIyDE4Ywf3uIFdfoLE1vhwp_U082PKl2zckUINuZ_e-RDgsbyQNB7AU2vUEijBV1qfIq0KchXWAmNnQ4hbHNRhgAwF8k92pKP96t440cQAwSrNjAe2qMAEukHIQPmMTkZ8eEoeCO3E_g\",\n\t\t\t\"fingerprint\":\"8D005E94073B115D855A2C4008B2BAFA768FA39C7BB8C74AC552181C4E85DA9B\"\n\t\t\t\n\t\t},\n\t\t\"type\":\"kubernetes:KubernetesServer\",\n\t\t\"project\":\"Lab\"\n\t\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/pipeline/api/pipelines",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"pipeline",
+								"api",
+								"pipelines"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CodeStream - Execute a Pipeline",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "18230738-3f65-4402-adb0-21b29b4840e0",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"deploymentName\": \"Example API Deployment\",\n  \"reason\": \"Create a deployment via API\",\n  \"description\": \"Create a deployment via API\",\n  \"projectLink\": \"{{projectLink}}\",\n  \"plan\": false,\n  \"destroy\": false,\n  \"blueprintId\": \"{{bpNameLink}}\",\n  \"inputs\": {\n    \"count\": \"1\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/blueprint/api/blueprint-requests",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"blueprint",
+								"api",
+								"blueprint-requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CodeStream - Create a Pipeline",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "18230738-3f65-4402-adb0-21b29b4840e0",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"deploymentName\": \"Example API Deployment\",\n  \"reason\": \"Create a deployment via API\",\n  \"description\": \"Create a deployment via API\",\n  \"projectLink\": \"{{projectLink}}\",\n  \"plan\": false,\n  \"destroy\": false,\n  \"blueprintId\": \"{{bpNameLink}}\",\n  \"inputs\": {\n    \"count\": \"1\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/blueprint/api/blueprint-requests",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"blueprint",
+								"api",
+								"blueprint-requests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CodeStream - Create a Pipeline Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "18230738-3f65-4402-adb0-21b29b4840e0",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"deploymentName\": \"Example API Deployment\",\n  \"reason\": \"Create a deployment via API\",\n  \"description\": \"Create a deployment via API\",\n  \"projectLink\": \"{{projectLink}}\",\n  \"plan\": false,\n  \"destroy\": false,\n  \"blueprintId\": \"{{bpNameLink}}\",\n  \"inputs\": {\n    \"count\": \"1\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{url-home}}/blueprint/api/blueprint-requests",
+							"host": [
+								"{{url-home}}"
+							],
+							"path": [
+								"blueprint",
+								"api",
+								"blueprint-requests"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "24d4c3c6-8f1a-470c-bb28-fc8f19307ce6",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "eaa8ef06-e811-44f9-bff3-fe58c9fbfbc7",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	]
+}

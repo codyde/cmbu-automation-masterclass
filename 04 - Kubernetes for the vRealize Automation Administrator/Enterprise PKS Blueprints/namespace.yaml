@@ -1,0 +1,13 @@
+formatVersion: 1
+version: 1
+name: Namespace for a Cluster
+inputs:
+  snName:
+    type: string
+resources:
+  Cloud_K8S_Namespace_1:
+    type: Cloud.K8S.Namespace
+    properties:
+      name: '${input.snName}'
+      constraints:
+        - tag: 'env:pkscluster02'

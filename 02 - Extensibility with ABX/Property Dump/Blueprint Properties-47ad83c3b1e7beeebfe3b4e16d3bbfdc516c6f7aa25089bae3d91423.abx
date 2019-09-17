@@ -1,0 +1,19 @@
+---
+exportVersion: "1"
+exportId: "8a768cec6bfed6cd016c03eb6545063e"
+name: "Blueprint Properties"
+runtime: "python"
+entrypoint: "handler"
+inputs:
+  target: "World"
+timeoutSeconds: 180
+deploymentTimeoutSeconds: 600
+dependencies: "requests"
+actionType: "SCRIPT"
+configuration:
+  const-providers:
+  - "aws"
+  const_azure-system_managed_identity: false
+actionTemplateName: "Custom script"
+actionTemplateNamespace: "com.vmware.automation.abx"
+memoryInMB: 150

@@ -1,0 +1,22 @@
+formatVersion: 1
+inputs:
+  name:
+    type: string
+    description: We are going to name our machine after the eye color and birth year of our character!
+    oneOf:
+      - title: Luke Skywalker
+        const: luke
+      - title: Han Solo
+        const: han
+      - title: Leia Organa
+        const: leia
+resources:
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    properties:
+      swRename: true
+      nameSearch: '${input.name}'
+      image: ubuntu
+      flavor: small
+      constraints:
+        - tag: 'env:aws'

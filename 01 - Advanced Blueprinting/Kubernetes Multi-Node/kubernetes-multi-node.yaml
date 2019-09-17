@@ -1,0 +1,78 @@
+formatVersion: 1
+name: Kubernetes - 1-Master/N-Workers (Ansible)
+version: 1
+inputs:
+  workerNodes:
+    type: integer
+resources:
+  Master-Node:
+    type: Cloud.Ansible
+    properties:
+      authentication: usernamePassword
+      inventoryFile: /etc/ansible/hosts
+      username: root
+      password: VMware123!
+      playbooks:
+        provision:
+          - /root/playbooks/kubernetes-master.yml
+      osType: linux
+      groups:
+        - kubernetes-master
+      maxConnectionRetries: 10
+      host: '${resource.Master.*}'
+      account: Ansible-OSS
+  Worker-Node:
+    type: Cloud.Ansible
+    properties:
+      count: '${input.workerNodes}'
+      authentication: usernamePassword
+      inventoryFile: /etc/ansible/hosts
+      username: root
+      password: VMware123!
+      playbooks:
+        provision:
+          - /root/playbooks/kubernetes-worker.yml
+      osType: linux
+      groups:
+        - kubernetes-worker
+      maxConnectionRetries: 10
+      host: '${resource.Worker.*}'
+      account: Ansible-OSS
+  Master:
+    type: Cloud.Machine
+    properties:
+      codysFoo: '${env.orgId}'
+      image: ubuntu
+      customizationSpec: Linux Server
+      flavor: medium
+      constraints:
+        - tag: 'env:vsphere'
+      cloudConfig: |
+        #cloud-config
+        package_update: true
+        packages:
+          - python
+        users:
+          - name: root
+            ssh-authorized-keys:
+              - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVKM7LG59dNc6RscfI/ruSRhU5Bvheb66fzSD3ctQSGnbtkxzvMRHnFTINjzkqYrP3zU8eDBJ6oKEDDQgdZ2bNXClX423Ccm00u8b+oHOOeQRk6EthpGutfgTs6KOD59PWWsqUu7F/cu/dfUAnwSOr+iLtM8zlId1AOr0qCJtD2Da2Ee6SKJA6AoV6wgQy2nhdM2t3ZICeL4waRw/dLkWz92pUrpB7p0Lol0HZy8c9TffBfTBTKy2rxlSxZyyC5yKbaY5D4Z2KVm0pFti/vr6BoGoXRgl0my3GnIdK4MPEFODyhkHKjNQQW0lv9fBcB5EZ3WqPuvn3aK0x7zuXQWJd
+  Worker:
+    type: Cloud.Machine
+    dependsOn:
+      - Master-Node
+    properties:
+      count: '${input.workerNodes}'
+      image: ubuntu
+      customizationSpec: Linux Server
+      flavor: medium
+      constraints:
+        - tag: 'env:vsphere'
+      cloudConfig: |
+        #cloud-config
+        package_update: true
+        packages:
+          - python
+        users:
+          - name: root
+            ssh-authorized-keys:
+              - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVKM7LG59dNc6RscfI/ruSRhU5Bvheb66fzSD3ctQSGnbtkxzvMRHnFTINjzkqYrP3zU8eDBJ6oKEDDQgdZ2bNXClX423Ccm00u8b+oHOOeQRk6EthpGutfgTs6KOD59PWWsqUu7F/cu/dfUAnwSOr+iLtM8zlId1AOr0qCJtD2Da2Ee6SKJA6AoV6wgQy2nhdM2t3ZICeL4waRw/dLkWz92pUrpB7p0Lol0HZy8c9TffBfTBTKy2rxlSxZyyC5yKbaY5D4Z2KVm0pFti/vr6BoGoXRgl0my3GnIdK4MPEFODyhkHKjNQQW0lv9fBcB5EZ3WqPuvn3aK0x7zuXQWJd

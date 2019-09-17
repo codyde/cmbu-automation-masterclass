@@ -1,0 +1,24 @@
+formatVersion: 1
+name: Enterprise PKS Cluster
+version: 1
+inputs:
+  hostname:
+    type: string
+  size:
+    type: integer
+    minimum: 1
+    maximum: 2
+  plan:
+    type: string
+    enum:
+      - Small
+      - Medium
+      - Large
+resources:
+  K8S_Cluster_1:
+    type: Cloud.K8S.Cluster
+    properties:
+      hostname: '${input.hostname}'
+      workers: '${input.size}'
+      constraints:
+        - tag: '${"pks:" + to_lower(input.plan)}'
