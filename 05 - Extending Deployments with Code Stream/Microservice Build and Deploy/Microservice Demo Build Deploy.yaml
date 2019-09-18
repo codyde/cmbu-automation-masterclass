@@ -82,7 +82,7 @@ stages:
           }
           payload: '{"text":"The Deployment is successful!"}'
           action: post
-          url: https://hooks.slack.com/services/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
+          url: https://hooks.slack.com/services/T024JFTN4/BCCAECL4D/<slackwebhook>
   Build:
     taskOrder:
     - DockerBuildDB
@@ -322,5 +322,5 @@ notifications:
     stage: Teardown
     payload: '{"text":"Your deployment of ${input.GIT_REPO_NAME} is waiting for approval to destroy"}'
     task: Approval Required
-    url: https://hooks.slack.com/services/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
+    url: https://hooks.slack.com/services/T024JFTN4/BCCAECL4D/<slackwebhook>
     event: WAITING

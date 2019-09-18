@@ -1,0 +1,21 @@
+---
+exportVersion: "1"
+exportId: "8a7695e669ed412a016a038d74d41301"
+name: "Create a PKS Cluster"
+runtime: "python"
+entrypoint: "handler"
+inputs:
+  size: "Small"
+  comment: "testing"
+  workers: 3
+  hostname: "pkscluster01.humblelab.com"
+timeoutSeconds: 180
+deploymentTimeoutSeconds: 600
+actionType: "SCRIPT"
+configuration:
+  const-providers:
+  - "aws"
+  const_azure-system_managed_identity: false
+actionTemplateName: "Custom script"
+actionTemplateNamespace: "com.vmware.automation.abx"
+memoryInMB: 150
