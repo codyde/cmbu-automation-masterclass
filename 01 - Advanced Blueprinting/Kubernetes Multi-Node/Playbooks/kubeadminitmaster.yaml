@@ -1,0 +1,41 @@
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: InitConfiguration
+bootstrapTokens:
+       - groups:
+         - system:bootstrappers:kubeadm:default-node-token
+         token: y7yaev.9dvwxx6ny4ef8vlq
+         ttl: 0s
+         usages:
+         - signing
+         - authentication
+nodeRegistration:
+  kubeletExtraArgs:
+    cloud-provider: "vsphere"
+    cloud-config: "/etc/kubernetes/vsphere.conf"
+localAPIEndpoint:
+  advertiseAddress: {{ ansible_default_ipv4.address }}
+  bindPort: 8443
+---
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: ClusterConfiguration
+kubernetesVersion: v1.15.0
+apiServer:
+  extraArgs:
+    cloud-provider: "vsphere"
+    cloud-config: "/etc/kubernetes/vsphere.conf"
+  extraVolumes:
+  - name: cloud
+    hostPath: "/etc/kubernetes/vsphere.conf"
+    mountPath: "/etc/kubernetes/vsphere.conf"
+  certSANs:
+  - {{ ansible_default_ipv4.address }}
+controllerManager:
+  extraArgs:
+    cloud-provider: "vsphere"
+    cloud-config: "/etc/kubernetes/vsphere.conf"
+  extraVolumes:
+  - name: cloud
+    hostPath: "/etc/kubernetes/vsphere.conf"
+    mountPath: "/etc/kubernetes/vsphere.conf"
+networking:
+  podSubnet: "192.162.0.0/16"
